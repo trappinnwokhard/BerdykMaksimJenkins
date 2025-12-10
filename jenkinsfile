@@ -16,7 +16,7 @@ pipeline {
 
         stage('Install Dependencies & Test') {
             steps {
-                bat 'pip install unittest-xml-reporting'
+                bat 'python -m pip install unittest-xml-reporting'
                 bat '''
                     set PYTHONIOENCODING=utf-8
                     python test_library.py
