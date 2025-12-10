@@ -8,11 +8,17 @@ pipeline {
             }
         }
 
+        stage('Install Dependencies') {
+            steps {
+                bat 'pip install unittest-xml-reporting'
+            }
+        }
+
         stage('Run Tests') {
             steps {
                 bat '''
                     set PYTHONIOENCODING=utf-8
-                    python -m unittest -v test_library.py
+                    python test_library.py
                 '''
             }
         }
@@ -20,10 +26,13 @@ pipeline {
 
     post {
         always {
-            echo 'Тестування завершено.'
+            junit 'test-reports/*.xml'
+        }
+        success {
+            echo 'Всі тести пройшли успішно!'
         }
         failure {
-            echo 'Увага! Тести впали.'
+            echo 'Є помилки в тестах.'
         }
     }
 }

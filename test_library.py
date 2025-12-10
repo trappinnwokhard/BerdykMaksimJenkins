@@ -1,6 +1,6 @@
 import unittest
 from library_system import LibraryManager 
-
+import xmlrunner
 class TestLibrarySystem(unittest.TestCase):
     
     def setUp(self):
@@ -45,4 +45,6 @@ class TestLibrarySystem(unittest.TestCase):
         self.assertFalse(result_fail)
 
 if __name__ == '__main__':
-    unittest.main()
+    runner = xmlrunner.XMLTestRunner(output='test-reports')
+    unittest.main(testRunner=runner)
+    del runner
