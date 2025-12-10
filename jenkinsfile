@@ -1,0 +1,29 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Run Tests') {
+            steps {
+                bat '''
+                    set PYTHONIOENCODING=utf-8
+                    python -m unittest -v test_library.py
+                '''
+            }
+        }
+    }
+
+    post {
+        always {
+            echo 'Тестування завершено.'
+        }
+        failure {
+            echo 'Увага! Тести впали.'
+        }
+    }
+}
