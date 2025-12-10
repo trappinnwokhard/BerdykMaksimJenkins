@@ -1,6 +1,12 @@
 pipeline {
     agent any
 
+    environment {
+        DOCKER_REGISTRY = 'trappinwok2hard' 
+        APP_NAME = 'library-app'
+        IMAGE_TAG = "${env.BUILD_NUMBER}"
+    }
+
     stages {
         stage('Checkout') {
             steps {
@@ -8,18 +14,40 @@ pipeline {
             }
         }
 
-        stage('Install Dependencies') {
+        stage('Install Dependencies & Test') {
             steps {
                 bat 'pip install unittest-xml-reporting'
-            }
-        }
-
-        stage('Run Tests') {
-            steps {
                 bat '''
                     set PYTHONIOENCODING=utf-8
                     python test_library.py
                 '''
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    echo 'Building Docker Image...'
+                    bat "docker build -t %DOCKER_REGISTRY%/%APP_NAME%:%IMAGE_TAG% -t %DOCKER_REGISTRY%/%APP_NAME%:latest ."
+                }
+            }
+        }
+
+        stage('Push to Docker Hub') {
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
+                        bat '''
+                            @echo off
+                            echo Logging in to Docker Hub...
+                            echo %DOCKER_PASS% | docker login -u %DOCKER_USER% --password-stdin
+                            
+                            echo Pushing image...
+                            docker push %DOCKER_REGISTRY%/%APP_NAME%:%IMAGE_TAG%
+                            docker push %DOCKER_REGISTRY%/%APP_NAME%:latest
+                        '''
+                    }
+                }
             }
         }
     }
@@ -29,10 +57,10 @@ pipeline {
             junit 'test-reports/*.xml'
         }
         success {
-            echo 'Всі тести пройшли успішно!'
+            echo 'Pipeline successfully finished! Image pushed to Docker Hub.'
         }
         failure {
-            echo 'Є помилки в тестах.'
+            echo 'Pipeline failed.'
         }
     }
 }
